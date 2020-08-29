@@ -1,0 +1,41 @@
+# https://docs.travis-ci.com/user/languages/r/
+# https://jarrettmeyer.com/2019/04/25/publishing-to-shinyapps-github-travis-ci
+
+# focal isn't available and bionic is broken?
+dist: xenial
+sudo: false
+latex: false
+language: r
+r:
+  - release
+
+#https://docs.travis-ci.com/user/notifications/#Configuring-email-notifications
+notifications:
+    email:
+      on_success: never
+      on_failure: always
+
+warnings_are_errors: false
+
+cache:
+    packages: true
+
+apt_packages:
+    - libgdal-dev
+    - libudunits2-dev
+
+r_packages:
+    - rsconnect
+    - shiny
+    - tidyverse
+    - lubridate
+    - shinyWidgets
+    - DT
+    - plotly
+    - readr
+    - shinydashboard
+    - shinyjs
+    - purrr
+
+script:
+    - R -f deploy.R
