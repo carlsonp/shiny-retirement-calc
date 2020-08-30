@@ -41,6 +41,16 @@ shinyServer(function(input, output, session) {
       # apply brokerage
       df[i,]['brokerage_stock_amount'] = round(df[i-1,]['brokerage_stock_amount'] * (1+(df[i,]['stock_return_percentage']/100)), 2)
       df[i,]['brokerage_bond_amount'] = round(df[i-1,]['brokerage_bond_amount'] * (1+(df[i,]['bond_return_percentage']/100)), 2)
+      
+      # brokerage asset rebalance
+      if (input$rebalanceassets) {
+        df[i,]['brokerage_amount'] = round(df[i,]['brokerage_stock_amount'] + df[i,]['brokerage_bond_amount'], 2)
+        
+        delta_stock = round(df[i,]['brokerage_stock_amount'] - (df[i,]['brokerage_amount'] * (input$target_stock_percentage/100)), 2)
+        delta_bond = round(df[i,]['brokerage_bond_amount'] - (df[i,]['brokerage_amount'] * (input$target_bond_percentage/100)), 2)
+        df[i,]['brokerage_stock_amount'] = df[i,]['brokerage_stock_amount'] - delta_stock
+        df[i,]['brokerage_bond_amount'] = df[i,]['brokerage_bond_amount'] - delta_bond
+      }
     }
     
     df[,'brokerage_amount'] = df[,'brokerage_stock_amount'] + df[,'brokerage_bond_amount']
@@ -49,8 +59,6 @@ shinyServer(function(input, output, session) {
     
     # did we hit the FIRE goal? remember this adjusts over time for inflation
     df[,'hit_fire_goal'] = df[,'brokerage_amount'] >= df[,'fire_target']
-    
-    # TODO: account for asset allocation rebalancing over time
     
     # clean out some of the variables set in the first row since they don't make sense
     df[1,]['inflation_percentage'] = NA
@@ -68,7 +76,7 @@ shinyServer(function(input, output, session) {
     num_simulations = 250
     df <- data.frame(age = input$age:80,
                      inflation_percentage = NA,
-                     fire_target = fire_target(),
+                     fire_target = round(fire_target(), 2),
                      hit_fire_goal = NA,
                      income = input$income,
                      income_growth_percentage = input$income_growth_percentage,
@@ -176,6 +184,19 @@ shinyServer(function(input, output, session) {
     return(rnorm(5000, mean=input$avg_inflation_percentage, sd=input$inflation_stddev))
   })
   
+  output$targetrebalancepercentages <- renderUI({
+    if (input$rebalanceassets) {
+      tags$div(
+        column(3,
+          numericInput("target_stock_percentage", "Target Stock Percentage:", 80, min = 0, max = 100, step = 0.1)
+        ),
+        column(3,
+          numericInput("target_bond_percentage", "Target Bond Percentage:", 20, min = 0, max = 100, step = 0.1)
+        )
+      )
+    }
+  })
+  
   output$stock_histogram <- renderPlotly({
     # https://plotly.com/r/histograms/
     plot_ly(x = ~stock_normal_dist(), type = "histogram") %>%
@@ -235,9 +256,9 @@ shinyServer(function(input, output, session) {
       add_trace(x = ~age, y = ~`Median`, name = 'Median', line = list(color='rgb(0, 255, 0)')) %>%
       add_trace(x = ~age, y = ~`75th_Percentile`, name = '75% Percentile', line = list(color='rgb(15, 12, 240)')) %>%
       add_trace(x = ~age, y = ~`90th_Percentile`, name = '90% Percentile', line = list(color='rgb(205, 12, 24)')) %>%
-      layout(title = "Brokerage Amount",
+      layout(title = "Brokerage Amount ($)",
              xaxis = list(title = "Age"),
-             yaxis = list(title = "Brokerage Amount"))
+             yaxis = list(title = "Brokerage Amount ($)"))
   })
   
   output$hit_fire_target_graph <- renderPlotly({

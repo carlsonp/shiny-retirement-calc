@@ -64,6 +64,12 @@ dashboardPage(
             uiOutput("savings")
           )
         ),
+        fixedRow(
+          column(3,
+            checkboxInput("rebalanceassets", "Rebalance brokerage asset allocation yearly", TRUE)
+          ),
+          uiOutput("targetrebalancepercentages")
+        ),
         numericInput("income_growth_percentage", "Income Growth Percentage:", 1, min = 0, max = 100, step = 0.1),
         numericInput("retirement_spending", "Retirement Spending ($):", 40000, min = 1, step = 1),
         numericInput("target_withdrawl_percentage", "Target Withdrawl Rate Percentage:", 4, min = 0.1, step = 0.1),
