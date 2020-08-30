@@ -12,9 +12,9 @@ dashboardPage(
   
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Settings", tabName = "Settings", icon = icon("chart-bar")),
-      menuItem("FIRE", tabName = "FIRE", icon = icon("map-marker")),
-      menuItem("Retirement", tabName = "Retirement", icon = icon("question")),
+      menuItem("Settings", tabName = "Settings", icon = icon("sliders-h")),
+      menuItem("FIRE", tabName = "FIRE", icon = icon("chart-line")),
+      menuItem("Retirement", tabName = "Retirement", icon = icon("chart-area")),
       menuItem("About", tabName = "About", icon = icon("question"))
     )
   ),
@@ -40,10 +40,11 @@ dashboardPage(
     
     tabItems(
       tabItem(tabName = "Settings",
+        tags$p("This is not intended to be fullproof and makes many assumptions, seek a financial professional for more in-depth individual advice."),
         numericInput("age", "Current Age:", 35, min = 1, max = 78, step = 1),
         fixedRow(
           column(3,
-            numericInput("brokerage_amount", "Brokerage Investments ($):", value = 25000, min = 0, step = 1)
+            numericInput("brokerage_amount", "Brokerage Investments ($):", value = 50000, min = 0, step = 1)
           ),
           column(3,
             uiOutput("stock_slider")
@@ -67,6 +68,7 @@ dashboardPage(
         numericInput("retirement_spending", "Retirement Spending ($):", 40000, min = 1, step = 1),
         numericInput("target_withdrawl_percentage", "Target Withdrawl Rate Percentage:", 4, min = 0.1, step = 0.1),
         numericInput("avg_tax_rate_percentage", "Average Tax Rate Percentage:", 7, min = 0.1, max = 100, step = 0.1),
+        tags$p("In todays dollars"),
         uiOutput("fire_target_ui"),
         fixedRow(
           column(3,
@@ -99,9 +101,10 @@ dashboardPage(
       ),
       tabItem(tabName = "FIRE",
         downloadButton("downloadmontecarlo", "Download Monte Carlo Data"),
-        tags$h2("First Monte Carlo Run:"),
+        tags$h3("Sample of the first Monte Carlo run:"),
         DT::dataTableOutput("montecarlo_table"),
-        plotlyOutput("retirement_graph")
+        plotlyOutput("brokerage_graph"),
+        plotlyOutput("hit_fire_target_graph")
       ),
       tabItem(tabName = "Retirement",
       ),
