@@ -40,10 +40,10 @@ dashboardPage(
     
     tabItems(
       tabItem(tabName = "Settings",
-        numericInput("age", "Current Age:", 36, min = 1, max = 78, step = 1),
+        numericInput("age", "Current Age:", 35, min = 1, max = 78, step = 1),
         fixedRow(
           column(3,
-            numericInput("brokerage_amount", "Brokerage Investments ($):", value = 10000, min = 0, step = 1)
+            numericInput("brokerage_amount", "Brokerage Investments ($):", value = 25000, min = 0, step = 1)
           ),
           column(3,
             uiOutput("stock_slider")
@@ -57,7 +57,7 @@ dashboardPage(
             numericInput("income", "Income ($):", 60000, min = 1, step = 1)
           ),
           column(3,
-            numericInput("spending", "Pre-Retirement Spending ($):", 40000, min = 1, step = 1)
+            numericInput("spending", "Pre-Retirement Spending ($):", 45000, min = 1, step = 1)
           ),
           column(3,
             uiOutput("savings")
@@ -98,6 +98,8 @@ dashboardPage(
         tags$p("BUTTON HERE to FIRE")
       ),
       tabItem(tabName = "FIRE",
+        downloadButton("downloadmontecarlo", "Download Monte Carlo Data"),
+        tags$h2("First Monte Carlo Run:"),
         DT::dataTableOutput("montecarlo_table"),
         plotlyOutput("retirement_graph")
       ),

@@ -15,53 +15,57 @@ options(scipen=999)
 shinyServer(function(input, output, session) {
   
   single_run <- function(df) {
+    # convert to a data matrix, much much faster than a dataframe for these calculations
+    df <- data.matrix(df)
     
-    df$stock_return_percentage = sample(stock_normal_dist(), nrow(df))
-    df$bond_return_percentage = sample(bond_normal_dist(), nrow(df))
+    df[,'stock_return_percentage'] = sample(stock_normal_dist(), nrow(df))
+    df[,'bond_return_percentage'] = sample(bond_normal_dist(), nrow(df))
 
     # apply inflation
-    df$inflation_percentage = sample(inflation_normal_dist(), nrow(df))
-    df$stock_return_percentage_adj_inflation = df$stock_return_percentage - df$inflation_percentage
-    df$bond_return_percentage_adj_inflation = df$bond_return_percentage - df$inflation_percentage
-    df$income_growth_percentage_adj_inflation = df$income_growth_percentage - df$inflation_percentage
-        
+    df[,'inflation_percentage'] = sample(inflation_normal_dist(), nrow(df))
+    df[,'stock_return_percentage_adj_inflation'] = df[,'stock_return_percentage'] - df[,'inflation_percentage']
+    df[,'bond_return_percentage_adj_inflation'] = df[,'bond_return_percentage'] - df[,'inflation_percentage']
+    df[,'income_growth_percentage_adj_inflation'] = df[,'income_growth_percentage'] - df[,'inflation_percentage']
+    
     for (i in 2:nrow(df)) {
       # apply income
-      df[i,]$income = df[i-1,]$income * (1+(df[i,]$income_growth_percentage_adj_inflation/100))
-      df[i,]$savings = df[i-1,]$income * (savings_percentage()/100)
+      df[i,]['income'] = df[i-1,]['income'] * (1+(df[i,]['income_growth_percentage_adj_inflation']/100))
+      df[i,]['savings'] = df[i-1,]['income'] * (savings_percentage()/100)
     }
-    
+
     # apply income to purchasing additional brokerage
-    df$brokerage_stock_amount = df$brokerage_stock_amount + (df$savings * (input$brokerage_stock_percentage/100))
-    df$brokerage_bond_amount = df$brokerage_bond_amount + (df$savings * (input$brokerage_bond_percentage/100))
+    df[,'brokerage_stock_amount'] = df[,'brokerage_stock_amount'] + (df[,'savings'] * (input$brokerage_stock_percentage/100))
+    df[,'brokerage_bond_amount'] = df[,'brokerage_bond_amount'] + (df[,'savings'] * (input$brokerage_bond_percentage/100))
 
     for (i in 2:nrow(df)) {
       # apply brokerage
-      df[i,]$brokerage_stock_amount = df[i-1,]$brokerage_stock_amount * (1+(df[i,]$stock_return_percentage/100))
-      df[i,]$brokerage_bond_amount = df[i-1,]$brokerage_bond_amount * (1+(df[i,]$bond_return_percentage/100))
+      df[i,]['brokerage_stock_amount'] = df[i-1,]['brokerage_stock_amount'] * (1+(df[i,]['stock_return_percentage']/100))
+      df[i,]['brokerage_bond_amount'] = df[i-1,]['brokerage_bond_amount'] * (1+(df[i,]['bond_return_percentage']/100))
     }
     
-    df$brokerage_amount = df$brokerage_stock_amount + df$brokerage_bond_amount
-    df$brokerage_stock_percentage = round((df$brokerage_stock_amount / df$brokerage_amount) * 100, 2)
-    df$brokerage_bond_percentage = round((df$brokerage_bond_amount / df$brokerage_amount) * 100, 2)
+    df[,'brokerage_amount'] = df[,'brokerage_stock_amount'] + df[,'brokerage_bond_amount']
+    df[,'brokerage_stock_percentage'] = round((df[,'brokerage_stock_amount'] / df[,'brokerage_amount']) * 100, 2)
+    df[,'brokerage_bond_percentage'] = round((df[,'brokerage_bond_amount'] / df[,'brokerage_amount']) * 100, 2)
     
     # TODO: account for asset allocation rebalancing over time
     
     # clean out some of the variables set in the first row since they don't make sense
-    df[1,]$inflation_percentage = NA
-    df[1,]$savings = NA
-    df[1,]$income_growth_percentage = NA
-    df[1,]$income_growth_percentage_adj_inflation = NA
-    df[1,]$stock_return_percentage = NA
-    df[1,]$stock_return_percentage_adj_inflation = NA
-    df[1,]$bond_return_percentage = NA
-    df[1,]$bond_return_percentage_adj_inflation = NA
+    df[1,]['inflation_percentage'] = NA
+    df[1,]['savings'] = NA
+    df[1,]['income_growth_percentage'] = NA
+    df[1,]['income_growth_percentage_adj_inflation'] = NA
+    df[1,]['stock_return_percentage'] = NA
+    df[1,]['stock_return_percentage_adj_inflation'] = NA
+    df[1,]['bond_return_percentage'] = NA
+    df[1,]['bond_return_percentage_adj_inflation'] = NA
     
+    # convert back to a dataframe
+    df <- data.frame(df)
     return(df)
   }
   
   monte_carlo <- reactive({
-    num_simulations = 100
+    num_simulations = 1000
     df <- data.frame(age = input$age:80,
                      inflation_percentage = NA,
                      income = input$income,
@@ -191,12 +195,22 @@ shinyServer(function(input, output, session) {
     )
     
     DT::datatable(
-      monte_carlo(),
+      monte_carlo() %>% dplyr::filter(run == 1),
       rownames = FALSE, # don't show row index
       # https://rstudio.github.io/DT/options.html
       options = list(scrollX = TRUE)
     )
   })
+  
+  output$downloadmontecarlo <- downloadHandler(
+    # https://shiny.rstudio.com/articles/download.html
+    filename = function() {
+      paste0("monte_carlo_", format(Sys.time(), "%Y-%m-%d"), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(monte_carlo(), file, row.names = FALSE)
+    }
+  )
   
   output$retirement_graph <- renderPlotly({
     shiny::validate(
