@@ -9,6 +9,7 @@
 ## Development
 
 * Install packages with `install.packages()`
+* Run the Shiny app via RStudio desktop
 
 ## CI/CD
 
@@ -18,12 +19,12 @@
 ## Data
 
 
-## TODOs
+## Open Questions
 
 * Are stock returns, bond returns, and inflation normally distributed?
 * How do correlations between asset classes impact results?  Are there correlations between inflation, interest rates, and market returns?
 
-## Add variables or account for
+## TODOs (add variables or account for)
 
 * Nursing home costs
 * Medical care / insurance
@@ -33,8 +34,9 @@
 * Traditional and Roth IRAs
 * Average life expectancy for M/F
 * Asset reallocation over time to mimic target retirement funds, more bonds over stocks, etc.
+* Inheritance
 
-## Resources
+## Online Calculators
 
 * [Vanguard retirement nest egg calculator](https://retirementplans.vanguard.com/VGApp/pe/pubeducation/calculators/RetirementNestEggCalc.jsf)
 * [Vanguard retirement income calculator](https://retirementplans.vanguard.com/VGApp/pe/pubeducation/calculators/RetirementIncomeCalc.jsf)
@@ -43,4 +45,9 @@
 * [Engaging Data marginal tax rates calculator](https://engaging-data.com/marginal-tax-rates/)
 * [Engaging Data tax brackets calculator](https://engaging-data.com/tax-brackets/)
 * [Engaging Data post-retirement calculator](https://engaging-data.com/will-money-last-retire-early/)
+
+## Resources and Readings
+
+* [Criticisms of Monte Carlo](http://retirementoptimizer.com/)
+* [Monte Carlo in Python](https://pbpython.com/monte-carlo.html)
 

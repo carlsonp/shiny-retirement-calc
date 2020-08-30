@@ -7,7 +7,6 @@ library(DT)
 library(shinydashboard)
 library(shinyjs)
 library(purrr)
-library(profvis)
 
 # don't use scientific notation for display output
 options(scipen=999)
