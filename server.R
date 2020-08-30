@@ -13,7 +13,7 @@ options(scipen=999)
 
 shinyServer(function(input, output, session) {
   
-  single_run <- function(df) {
+  single_run_preretirement <- function(df) {
     # convert to a data matrix, much much faster than a dataframe for these calculations
     df <- data.matrix(df)
     
@@ -72,7 +72,7 @@ shinyServer(function(input, output, session) {
     return(df)
   }
   
-  monte_carlo <- reactive({
+  monte_carlo_preretirement <- reactive({
     num_simulations = 250
     df <- data.frame(age = input$age:80,
                      inflation_percentage = NA,
@@ -95,9 +95,9 @@ shinyServer(function(input, output, session) {
       ret <- NULL
       for (i in 1:num_simulations) {
         if (is.null(ret)) {
-          ret <- single_run(df) %>% mutate(run = i)
+          ret <- single_run_preretirement(df) %>% mutate(run = i)
         } else {
-          ret <- dplyr::bind_rows(ret, single_run(df) %>% mutate(run = i))
+          ret <- dplyr::bind_rows(ret, single_run_preretirement(df) %>% mutate(run = i))
         }
         incProgress(1/num_simulations, detail = paste0((i/num_simulations)*100,"%"))
       }
@@ -112,7 +112,7 @@ shinyServer(function(input, output, session) {
     p_funs <- purrr::map(p, ~purrr::partial(quantile, probs = .x, na.rm = TRUE)) %>% 
       purrr::set_names(nm = p)
     
-    grp <- monte_carlo() %>%
+    grp <- monte_carlo_preretirement() %>%
       dplyr::group_by(age) %>% 
       dplyr::summarize_at(vars(brokerage_amount), funs(!!!p_funs)) %>%
       data.frame() %>%
@@ -126,7 +126,7 @@ shinyServer(function(input, output, session) {
   })
   
   hit_fire_target <- reactive({
-    grp <- monte_carlo() %>%
+    grp <- monte_carlo_preretirement() %>%
       dplyr::group_by(age, hit_fire_goal) %>%
       summarize(cnt = n()) %>%
       mutate(hit_fire_goal = as.character(hit_fire_goal)) %>%
@@ -188,10 +188,10 @@ shinyServer(function(input, output, session) {
     if (input$rebalanceassets) {
       tags$div(
         column(3,
-          numericInput("target_stock_percentage", "Target Stock Percentage:", 80, min = 0, max = 100, step = 0.1)
+          sliderInput("target_stock_percentage", "Target Stock Percentage", value = 80, min = 0, max = 100, step = 0.1)
         ),
         column(3,
-          numericInput("target_bond_percentage", "Target Bond Percentage:", 20, min = 0, max = 100, step = 0.1)
+          shinyjs::disabled(sliderInput("target_bond_percentage", "Target Bond Percentage", value = 100-input$target_stock_percentage, min=0, max=100))
         )
       )
     }
@@ -223,11 +223,11 @@ shinyServer(function(input, output, session) {
   
   output$montecarlo_table <- DT::renderDataTable({
     shiny::validate(
-      need(!is.null(monte_carlo()) & !is.na(monte_carlo()), 'Loading...')
+      need(!is.null(monte_carlo_preretirement()) & !is.na(monte_carlo_preretirement()), 'Loading...')
     )
     
     DT::datatable(
-      monte_carlo() %>% dplyr::filter(run == 1),
+      monte_carlo_preretirement() %>% dplyr::filter(run == 1),
       rownames = FALSE, # don't show row index
       # https://rstudio.github.io/DT/options.html
       options = list(scrollX = TRUE),
@@ -241,7 +241,7 @@ shinyServer(function(input, output, session) {
       paste0("monte_carlo_", format(Sys.time(), "%Y-%m-%d"), ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(monte_carlo(), file, row.names = FALSE)
+      write.csv(monte_carlo_preretirement(), file, row.names = FALSE)
     }
   )
   
@@ -274,4 +274,17 @@ shinyServer(function(input, output, session) {
              xaxis = list(title = "Age"),
              yaxis = list(title = "Percentage of simulations that hit FIRE target"))
   })
+  
+  output$setupavglife <- renderUI({
+    if (input$useavglife) {
+      pickerInput('gender', 'Gender',
+                  choices = c("Male", "Female"),
+                  multiple = FALSE)
+    }
+  })
+  
+  output$retirementyear <- renderUI({
+    tags$p(paste0("You retire ", input$retirementage - input$age, " years from now."))
+  })
+  
 })
