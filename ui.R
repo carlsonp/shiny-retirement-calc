@@ -104,7 +104,12 @@ dashboardPage(
           column(3,
             checkboxInput("rebalanceassets", "Rebalance brokerage asset allocation yearly", TRUE)
           ),
-          uiOutput("targetrebalancepercentages")
+          column(3,
+            uiOutput("target_stock")
+          ),
+          column(3,
+            uiOutput("target_bond")
+          )
         ),
         numericInput("income_growth_percentage", "Income Growth Percentage:", 1, min = 0, max = 100, step = 0.1),
         numericInput("retirement_spending", "Retirement Spending ($):", 40000, min = 1, step = 1),
@@ -132,6 +137,14 @@ dashboardPage(
           ),
           column(3,
             uiOutput("setupavglife")
+          )
+        ),
+        fixedRow(
+          column(3,
+            uiOutput("target_stock_retirement")
+          ),
+          column(3,
+            uiOutput("target_bond_retirement")
           )
         ),
         tags$p("BUTTON HERE to retirement")

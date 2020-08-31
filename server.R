@@ -184,16 +184,15 @@ shinyServer(function(input, output, session) {
     return(rnorm(5000, mean=input$avg_inflation_percentage, sd=input$inflation_stddev))
   })
   
-  output$targetrebalancepercentages <- renderUI({
+  output$target_stock <- renderUI({
     if (input$rebalanceassets) {
-      tags$div(
-        column(3,
-          sliderInput("target_stock_percentage", "Target Stock Percentage", value = 80, min = 0, max = 100, step = 0.1)
-        ),
-        column(3,
-          shinyjs::disabled(sliderInput("target_bond_percentage", "Target Bond Percentage", value = 100-input$target_stock_percentage, min=0, max=100))
-        )
-      )
+      sliderInput("target_stock_percentage", "Target Stock Percentage", value = 80, min = 0, max = 100, step = 0.1)
+    }
+  })
+  
+  output$target_bond <- renderUI({
+    if (input$rebalanceassets) {
+      shinyjs::disabled(sliderInput("target_bond_percentage", "Target Bond Percentage", value = 100-input$target_stock_percentage, min=0, max=100))
     }
   })
   
@@ -285,6 +284,14 @@ shinyServer(function(input, output, session) {
   
   output$retirementyear <- renderUI({
     tags$p(paste0("You retire ", input$retirementage - input$age, " years from now."))
+  })
+  
+  output$target_stock_retirement <- renderUI({
+    sliderInput("target_stock_retirement_percentage", "Target Retirement Stock Percentage", value = 20, min = 0, max = 100, step = 0.1)
+  })
+  
+  output$target_bond_retirement <- renderUI({
+    shinyjs::disabled(sliderInput("target_bond_retirement_percentage", "Target Retirement Bond Percentage", value = 100-input$target_stock_retirement_percentage, min=0, max=100))
   })
   
 })
