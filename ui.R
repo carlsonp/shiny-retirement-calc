@@ -143,18 +143,18 @@ dashboardPage(
         ),
         fixedRow(
           column(3,
-            checkboxInput("useavglife", "Use average life expectancy data", TRUE)
-          ),
-          column(3,
-            uiOutput("setupavglife")
-          )
-        ),
-        fixedRow(
-          column(3,
             uiOutput("target_stock_retirement")
           ),
           column(3,
             uiOutput("target_bond_retirement")
+          )
+        ),
+        fixedRow(
+          column(3,
+                 checkboxInput("useavglife", "Use average life expectancy data", TRUE)
+          ),
+          column(3,
+                 uiOutput("setupavglife")
           )
         ),
         tags$p("BUTTON HERE to retirement")
