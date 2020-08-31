@@ -48,6 +48,7 @@ dashboardPage(
       ),
       tabItem(tabName = "GlobalSettings",
         numericInput("age", "Current Age:", 35, min = 1, max = 78, step = 1),
+        numericInput("retirement_spending", "Retirement Spending ($):", 40000, min = 1, step = 1),
         fixedRow(
           column(3,
              numericInput("avg_stock_return_percentage", "Average Stock Return Percentage:", 8.1, min = 0.1, max = 100, step = 0.1)
@@ -112,7 +113,7 @@ dashboardPage(
           )
         ),
         numericInput("income_growth_percentage", "Income Growth Percentage:", 1, min = 0, max = 100, step = 0.1),
-        numericInput("retirement_spending", "Retirement Spending ($):", 40000, min = 1, step = 1),
+        uiOutput("retirementSpending"),
         numericInput("target_withdrawl_percentage", "Target Withdrawl Rate Percentage:", 4, min = 0.1, step = 0.1),
         numericInput("avg_tax_rate_percentage", "Average Tax Rate Percentage:", 7, min = 0.1, max = 100, step = 0.1),
         tags$p("In todays dollars"),
@@ -130,7 +131,16 @@ dashboardPage(
       tabItem(tabName = "RetirementSettings",
         numericInput("retirementage", "Retirement Age:", 65, min = 1, max = 100, step = 1),
         uiOutput("retirementyear"),
-        numericInput("retirementsavings", "Savings Upon Retirement ($):", 1000000, min = 1, step = 1),
+        uiOutput("retirementSpendingDup"),
+        numericInput("retirementsavings", "Savings Upon Retirement ($):", 2000000, min = 1, step = 1),
+        fixedRow(
+          column(3,
+            uiOutput("stock_current_slider")
+          ),
+          column(3,
+            uiOutput("bond_current_slider")
+          )
+        ),
         fixedRow(
           column(3,
             checkboxInput("useavglife", "Use average life expectancy data", TRUE)
@@ -150,6 +160,10 @@ dashboardPage(
         tags$p("BUTTON HERE to retirement")
       ),
       tabItem(tabName = "Retirement",
+        downloadButton("downloadmontecarloretirement", "Download Monte Carlo Data"),
+        tags$h3("Sample of the first Monte Carlo run:"),
+        DT::dataTableOutput("montecarlo_table_retirement"),
+        plotlyOutput("brokerage_retirement_graph")
       ),
       tabItem(tabName = "About",
       )

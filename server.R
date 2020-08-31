@@ -8,69 +8,13 @@ library(shinydashboard)
 library(shinyjs)
 library(purrr)
 
+
 # don't use scientific notation for display output
 options(scipen=999)
 
 shinyServer(function(input, output, session) {
   
-  single_run_preretirement <- function(df) {
-    # convert to a data matrix, much much faster than a dataframe for these calculations
-    df <- data.matrix(df)
-    
-    df[,'stock_return_percentage'] = round(sample(stock_normal_dist(), nrow(df)), 2)
-    df[,'bond_return_percentage'] = round(sample(bond_normal_dist(), nrow(df)), 2)
-
-    # apply inflation
-    df[,'inflation_percentage'] = round(sample(inflation_normal_dist(), nrow(df)), 2)
-    for (i in 2:nrow(df)) {
-      # apply inflation to FIRE target
-      df[i,]['fire_target'] = round(df[i,]['fire_target'] * (1+(df[i,]['inflation_percentage']/100)), 2)
-    }
-
-    for (i in 2:nrow(df)) {
-      # apply income
-      df[i,]['income'] = round(df[i-1,]['income'] * (1+(df[i,]['income_growth_percentage']/100)), 2)
-      df[i,]['savings'] = round(df[i-1,]['income'] * (savings_percentage()/100), 2)
-    }
-
-    # apply income to purchasing additional brokerage
-    df[,'brokerage_stock_amount'] = round(df[,'brokerage_stock_amount'] + (df[,'savings'] * (input$brokerage_stock_percentage/100)), 2)
-    df[,'brokerage_bond_amount'] = round(df[,'brokerage_bond_amount'] + (df[,'savings'] * (input$brokerage_bond_percentage/100)), 2)
-
-    for (i in 2:nrow(df)) {
-      # apply brokerage
-      df[i,]['brokerage_stock_amount'] = round(df[i-1,]['brokerage_stock_amount'] * (1+(df[i,]['stock_return_percentage']/100)), 2)
-      df[i,]['brokerage_bond_amount'] = round(df[i-1,]['brokerage_bond_amount'] * (1+(df[i,]['bond_return_percentage']/100)), 2)
-      
-      # brokerage asset rebalance
-      if (input$rebalanceassets) {
-        df[i,]['brokerage_amount'] = round(df[i,]['brokerage_stock_amount'] + df[i,]['brokerage_bond_amount'], 2)
-        
-        delta_stock = round(df[i,]['brokerage_stock_amount'] - (df[i,]['brokerage_amount'] * (input$target_stock_percentage/100)), 2)
-        delta_bond = round(df[i,]['brokerage_bond_amount'] - (df[i,]['brokerage_amount'] * (input$target_bond_percentage/100)), 2)
-        df[i,]['brokerage_stock_amount'] = df[i,]['brokerage_stock_amount'] - delta_stock
-        df[i,]['brokerage_bond_amount'] = df[i,]['brokerage_bond_amount'] - delta_bond
-      }
-    }
-    
-    df[,'brokerage_amount'] = df[,'brokerage_stock_amount'] + df[,'brokerage_bond_amount']
-    df[,'brokerage_stock_percentage'] = round((df[,'brokerage_stock_amount'] / df[,'brokerage_amount']) * 100, 2)
-    df[,'brokerage_bond_percentage'] = round((df[,'brokerage_bond_amount'] / df[,'brokerage_amount']) * 100, 2)
-    
-    # did we hit the FIRE goal? remember this adjusts over time for inflation
-    df[,'hit_fire_goal'] = df[,'brokerage_amount'] >= df[,'fire_target']
-    
-    # clean out some of the variables set in the first row since they don't make sense
-    df[1,]['inflation_percentage'] = NA
-    df[1,]['savings'] = NA
-    df[1,]['income_growth_percentage'] = NA
-    df[1,]['stock_return_percentage'] = NA
-    df[1,]['bond_return_percentage'] = NA
-
-    # convert back to a dataframe
-    df <- data.frame(df)
-    return(df)
-  }
+  source("monte_carlo.R", local=TRUE)
   
   monte_carlo_preretirement <- reactive({
     num_simulations = 250
@@ -122,6 +66,56 @@ shinyServer(function(input, output, session) {
       dplyr::rename("75th_Percentile" = X0.75) %>%
       dplyr::rename("90th_Percentile" = X0.9)
       
+    return(grp)
+  })
+  
+  monte_carlo_retirement <- reactive({
+    num_simulations = 250
+    df <- data.frame(age = input$retirementage:110,
+                     inflation_percentage = NA,
+                     retirement_spending = NA,
+                     brokerage_amount = input$retirementsavings,
+                     brokerage_stock_percentage = input$brokerage_stock_current_percentage,
+                     brokerage_stock_amount = input$retirementsavings * (input$brokerage_stock_current_percentage/100),
+                     stock_return_percentage = NA,
+                     brokerage_bond_percentage = input$brokerage_bond_current_percentage,
+                     brokerage_bond_amount = input$retirementsavings * (input$brokerage_bond_current_percentage/100),
+                     bond_return_percentage = NA
+    )
+    yrs = input$retirementage - input$age
+    
+    withProgress(message = 'Running Monte Carlo simulation', value = 0, {
+      # iterate through monte carlo simulations
+      ret <- NULL
+      for (i in 1:num_simulations) {
+        if (is.null(ret)) {
+          ret <- single_run_retirement(df, yrs) %>% mutate(run = i)
+        } else {
+          ret <- dplyr::bind_rows(ret, single_run_retirement(df, yrs) %>% mutate(run = i))
+        }
+        incProgress(1/num_simulations, detail = paste0((i/num_simulations)*100,"%"))
+      }
+    })
+    return(ret)
+  })
+  
+  brokerage_retirement_percentiles <- reactive({
+    # https://tbradley1013.github.io/2018/10/01/calculating-quantiles-for-groups-with-dplyr-summarize-and-purrr-partial/
+    # calculate percentiles for brokerage amounts at each age
+    p <- c(0.1, 0.25, 0.5, 0.75, 0.9)
+    p_funs <- purrr::map(p, ~purrr::partial(quantile, probs = .x, na.rm = TRUE)) %>% 
+      purrr::set_names(nm = p)
+    
+    grp <- monte_carlo_retirement() %>%
+      dplyr::group_by(age) %>% 
+      dplyr::summarize_at(vars(brokerage_amount), funs(!!!p_funs)) %>%
+      data.frame() %>%
+      dplyr::rename("10th_Percentile" = X0.1) %>%
+      dplyr::rename("25th_Percentile" = X0.25) %>%
+      dplyr::rename("Median" = X0.5) %>%
+      dplyr::rename("75th_Percentile" = X0.75) %>%
+      dplyr::rename("90th_Percentile" = X0.9)
+    
     return(grp)
   })
   
@@ -184,6 +178,14 @@ shinyServer(function(input, output, session) {
     return(rnorm(5000, mean=input$avg_inflation_percentage, sd=input$inflation_stddev))
   })
   
+  output$retirementSpending <- renderUI({
+    tags$p(paste0("Retirement spending: $", format(input$retirement_spending, big.mark=",", scientific=FALSE)), style="font-size:18px;")
+  })
+  
+  output$retirementSpendingDup <- renderUI({
+    tags$p(paste0("Retirement spending: $", format(input$retirement_spending, big.mark=",", scientific=FALSE)), style="font-size:18px;")
+  })
+  
   output$target_stock <- renderUI({
     if (input$rebalanceassets) {
       sliderInput("target_stock_percentage", "Target Stock Percentage", value = 80, min = 0, max = 100, step = 0.1)
@@ -237,10 +239,20 @@ shinyServer(function(input, output, session) {
   output$downloadmontecarlo <- downloadHandler(
     # https://shiny.rstudio.com/articles/download.html
     filename = function() {
-      paste0("monte_carlo_", format(Sys.time(), "%Y-%m-%d"), ".csv", sep = "")
+      paste0("monte_carlo_preretirement", format(Sys.time(), "%Y-%m-%d"), ".csv", sep = "")
     },
     content = function(file) {
       write.csv(monte_carlo_preretirement(), file, row.names = FALSE)
+    }
+  )
+  
+  output$downloadmontecarloretirement <- downloadHandler(
+    # https://shiny.rstudio.com/articles/download.html
+    filename = function() {
+      paste0("monte_carlo_retirement", format(Sys.time(), "%Y-%m-%d"), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(monte_carlo_retirement(), file, row.names = FALSE)
     }
   )
   
@@ -286,12 +298,50 @@ shinyServer(function(input, output, session) {
     tags$p(paste0("You retire ", input$retirementage - input$age, " years from now."))
   })
   
+  output$stock_current_slider <- renderUI({
+    sliderInput("brokerage_stock_current_percentage", "Brokerage Stock Percentage", value = 20, min = 0, max = 100, step = 1)
+  })
+  
+  output$bond_current_slider <- renderUI({
+    shinyjs::disabled(sliderInput("brokerage_bond_current_percentage", "Brokerage Bond Percentage", value = 100-input$brokerage_stock_current_percentage, min=0, max=100))
+  })
+  
   output$target_stock_retirement <- renderUI({
-    sliderInput("target_stock_retirement_percentage", "Target Retirement Stock Percentage", value = 20, min = 0, max = 100, step = 0.1)
+    sliderInput("target_stock_retirement_percentage", "Target Retirement Stock Percentage", value = 20, min = 0, max = 100, step = 1)
   })
   
   output$target_bond_retirement <- renderUI({
     shinyjs::disabled(sliderInput("target_bond_retirement_percentage", "Target Retirement Bond Percentage", value = 100-input$target_stock_retirement_percentage, min=0, max=100))
+  })
+  
+  output$montecarlo_table_retirement <- DT::renderDataTable({
+    shiny::validate(
+      need(!is.null(monte_carlo_retirement()) & !is.na(monte_carlo_retirement()), 'Loading...')
+    )
+    
+    DT::datatable(
+      monte_carlo_retirement() %>% dplyr::filter(run == 1),
+      rownames = FALSE, # don't show row index
+      # https://rstudio.github.io/DT/options.html
+      options = list(scrollX = TRUE),
+      selection = 'none'
+    )
+  })
+  
+  output$brokerage_retirement_graph <- renderPlotly({
+    shiny::validate(
+      need(!is.null(brokerage_retirement_percentiles()) & !is.na(brokerage_retirement_percentiles()), 'Loading...')
+    )
+    
+    # https://plotly.com/r/line-charts/
+    plot_ly(brokerage_retirement_percentiles(), x = ~age, y = ~`10th_Percentile`, type = "scatter", mode = "lines", name = '10% Percentile', line = list(color='rgb(205, 12, 24)')) %>%
+      add_trace(x = ~age, y = ~`25th_Percentile`, name = '25% Percentile', line = list(color='rgb(15, 12, 240)')) %>%
+      add_trace(x = ~age, y = ~`Median`, name = 'Median', line = list(color='rgb(0, 255, 0)')) %>%
+      add_trace(x = ~age, y = ~`75th_Percentile`, name = '75% Percentile', line = list(color='rgb(15, 12, 240)')) %>%
+      add_trace(x = ~age, y = ~`90th_Percentile`, name = '90% Percentile', line = list(color='rgb(205, 12, 24)')) %>%
+      layout(title = "Brokerage Amount ($)",
+             xaxis = list(title = "Age"),
+             yaxis = list(title = "Brokerage Amount ($)"))
   })
   
 })
