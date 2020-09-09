@@ -121,7 +121,7 @@ dashboardPage(
         tags$p("BUTTON HERE to FIRE")
       ),
       tabItem(tabName = "FIRE",
-        downloadButton("downloadmontecarlo", "Download Monte Carlo Data"),
+        downloadButton("downloadmontecarlo", "Download Monte Carlo Pre-Retirement Data"),
         tags$h3("Sample of the first Monte Carlo run:"),
         DT::dataTableOutput("montecarlo_table"),
         plotlyOutput("brokerage_graph"),
@@ -151,19 +151,20 @@ dashboardPage(
         ),
         fixedRow(
           column(3,
-                 checkboxInput("useavglife", "Use average life expectancy data", TRUE)
+             checkboxInput("useavglife", "Use average life expectancy data", TRUE)
           ),
           column(3,
-                 uiOutput("setupavglife")
+             uiOutput("setupavglife")
           )
         ),
         tags$p("BUTTON HERE to retirement")
       ),
       tabItem(tabName = "Retirement",
-        downloadButton("downloadmontecarloretirement", "Download Monte Carlo Data"),
+        downloadButton("downloadmontecarloretirement", "Download Monte Carlo Retirement Data"),
         tags$h3("Sample of the first Monte Carlo run:"),
         DT::dataTableOutput("montecarlo_table_retirement"),
-        plotlyOutput("brokerage_retirement_graph")
+        plotlyOutput("brokerage_retirement_graph"),
+        plotlyOutput("deceased_graph")
       ),
       tabItem(tabName = "About",
       )

@@ -12,6 +12,22 @@ library(purrr)
 # don't use scientific notation for display output
 options(scipen=999)
 
+# load up Social Security death projections for males and females
+# convert to long format
+# http://www.cookbook-r.com/Manipulating_data/Converting_data_between_wide_and_long_format/
+male_death_projections <- read_csv("DeathProbsE_M_Alt2_TR2020.csv") %>%
+  gather(age, probability, `0`:`119`, factor_key=TRUE) %>%
+  mutate(gender = "Male") %>%
+  mutate(age = as.integer(as.character(age))) %>%
+  data.frame()
+female_death_projections <- read_csv("DeathProbsE_F_Alt2_TR2020.csv") %>%
+  gather(age, probability, `0`:`119`, factor_key=TRUE) %>%
+  mutate(gender = "Female") %>%
+  mutate(age = as.integer(as.character(age))) %>%
+  data.frame()
+death_projections <- rbind(male_death_projections, female_death_projections)
+
+
 shinyServer(function(input, output, session) {
   
   source("monte_carlo.R", local=TRUE)
@@ -34,7 +50,7 @@ shinyServer(function(input, output, session) {
                      bond_return_percentage = NA
     )
     
-    withProgress(message = 'Running Monte Carlo simulation', value = 0, {
+    withProgress(message = 'Running Monte Carlo pre-retirement simulation', value = 0, {
       # iterate through monte carlo simulations
       ret <- NULL
       for (i in 1:num_simulations) {
@@ -70,10 +86,13 @@ shinyServer(function(input, output, session) {
   })
   
   monte_carlo_retirement <- reactive({
-    num_simulations = 250
+    num_simulations = 50
     df <- data.frame(age = input$retirementage:110,
+                     year = retire_year(),
+                     gender = NA,
+                     deceased = 0,
                      inflation_percentage = NA,
-                     retirement_spending = NA,
+                     retirement_spending = input$retirement_spending,
                      brokerage_amount = input$retirementsavings,
                      brokerage_stock_percentage = input$brokerage_stock_current_percentage,
                      brokerage_stock_amount = input$retirementsavings * (input$brokerage_stock_current_percentage/100),
@@ -84,14 +103,14 @@ shinyServer(function(input, output, session) {
     )
     yrs = input$retirementage - input$age
     
-    withProgress(message = 'Running Monte Carlo simulation', value = 0, {
+    withProgress(message = 'Running Monte Carlo retirement simulation', value = 0, {
       # iterate through monte carlo simulations
       ret <- NULL
       for (i in 1:num_simulations) {
         if (is.null(ret)) {
-          ret <- single_run_retirement(df, yrs) %>% mutate(run = i)
+          ret <- single_run_retirement(df, yrs, death_projections) %>% mutate(run = i)
         } else {
-          ret <- dplyr::bind_rows(ret, single_run_retirement(df, yrs) %>% mutate(run = i))
+          ret <- dplyr::bind_rows(ret, single_run_retirement(df, yrs, death_projections) %>% mutate(run = i))
         }
         incProgress(1/num_simulations, detail = paste0((i/num_simulations)*100,"%"))
       }
@@ -294,8 +313,16 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  years_until_retirement <- reactive({
+    return(input$retirementage - input$age)
+  })
+  
+  retire_year <- reactive({
+    return(as.integer(format(Sys.Date(), "%Y")) + years_until_retirement())
+  })
+  
   output$retirementyear <- renderUI({
-    tags$p(paste0("You retire ", input$retirementage - input$age, " years from now."))
+    tags$p(paste0("You retire ", years_until_retirement(), " years from now in ", retire_year(), "."))
   })
   
   output$stock_current_slider <- renderUI({
@@ -342,6 +369,31 @@ shinyServer(function(input, output, session) {
       layout(title = "Brokerage Amount ($)",
              xaxis = list(title = "Age"),
              yaxis = list(title = "Brokerage Amount ($)"))
+  })
+  
+  output$deceased_graph <- renderPlotly({
+    shiny::validate(
+      need(!is.null(monte_carlo_retirement()) & !is.na(monte_carlo_retirement()), 'Loading...')
+    )
+    
+    grp <- monte_carlo_retirement() %>%
+      dplyr::group_by(age, deceased) %>%
+      summarize(cnt = n()) %>%
+      mutate(deceased = as.character(deceased)) %>%
+      mutate(deceased = case_when(deceased == 0 ~ "Alive",
+                                  deceased == 1 ~ "Deceased",
+                                  deceased == 2 ~ "No_Data")) %>%
+      pivot_wider(names_from = deceased, values_from = cnt) %>%
+      data.frame()
+    
+    # https://plotly.com/r/filled-area-plots/#stacked-area-chart-with-cumulative-values
+    plot_ly(grp, x = ~age, y = ~Deceased, name = 'Deceased',
+            type = 'scatter', mode = 'none', stackgroup = 'one', groupnorm = 'percent', fillcolor = 'rgb(205, 12, 24)') %>%
+      add_trace(x = ~age, y = ~Alive, name = 'Alive', fillcolor = 'rgb(2, 205, 24)') %>%
+      add_trace(x = ~age, y = ~No_Data, name = 'No mortality data available', fillcolor = 'rgb(5, 12, 245)') %>%
+      layout(title = "Alive or Deceased?",
+             xaxis = list(title = "Age"),
+             yaxis = list(title = "Percentage of simulations that ended year deceased"))
   })
   
 })

@@ -18,6 +18,7 @@
 
 ## Data
 
+* [Social Security Death Probabilities Projections](https://www.ssa.gov/oact/HistEst/Death/2020/DeathProbabilities2020.html)
 
 ## Open Questions
 

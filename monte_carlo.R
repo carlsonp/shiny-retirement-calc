@@ -1,7 +1,8 @@
 single_run_preretirement <- function(df) {
   # convert to a data matrix, much much faster than a dataframe for these calculations
+  # cannot store character strings though!
   df <- data.matrix(df)
-  
+
   df[,'stock_return_percentage'] = round(sample(stock_normal_dist(), nrow(df)), 2)
   df[,'bond_return_percentage'] = round(sample(bond_normal_dist(), nrow(df)), 2)
   
@@ -59,8 +60,9 @@ single_run_preretirement <- function(df) {
 
 
 
-single_run_retirement <- function(df, yrs) {
+single_run_retirement <- function(df, yrs, death_projections) {
   # convert to a data matrix, much much faster than a dataframe for these calculations
+  # cannot store character strings though!
   df <- data.matrix(df)
   
   # take yrs and run for that many iterations to simulate a "starting" retirement spending
@@ -70,6 +72,36 @@ single_run_retirement <- function(df, yrs) {
     spending = spending * (1+(sample(inflation_normal_dist(), 1)/100))
   }
   df[,'retirement_spending'] = round(spending, 2)
+  
+  # apply year going forward
+  for (i in 2:nrow(df)) {
+    df[i,]['year'] = df[i-1,]['year']+1
+  }
+  
+  if (input$useavglife) {
+    # apply mortality chance based on gender
+    for (i in 2:nrow(df)) {
+      mortality_df <- death_projections %>%
+        filter(gender %in% input$gender) %>%
+        filter(age == df[i,]['age']) %>%
+        filter(Year == df[i,]['year'])
+      
+      # account for cases outside the range of mortality data we have available
+      # TODO: should we try to extrapolate future predictions outside of the social security ones?
+      if (nrow(mortality_df) != 0) {
+        if (df[i-1,]['deceased'] == 0 & runif(1) <= mortality_df$probability) {
+          df[i,]['deceased'] = 1
+        } else if (df[i-1,]['deceased'] == 1) {
+          df[i,]['deceased'] = 1
+        } else {
+          # no-op, already set to 0
+        }
+      } else {
+        # unknown, no data available
+        df[i,]['deceased'] = 2
+      }
+    }
+  }
   
   df[,'stock_return_percentage'] = round(sample(stock_normal_dist(), nrow(df)), 2)
   df[,'bond_return_percentage'] = round(sample(bond_normal_dist(), nrow(df)), 2)
@@ -110,5 +142,9 @@ single_run_retirement <- function(df, yrs) {
   
   # convert back to a dataframe
   df <- data.frame(df)
+  
+  # apply gender back in since it's a character and not numeric
+  df$gender = input$gender
+  
   return(df)
 }
