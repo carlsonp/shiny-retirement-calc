@@ -91,6 +91,7 @@ shinyServer(function(input, output, session) {
                      year = retire_year(),
                      gender = NA,
                      deceased = 0,
+                     broke = 0,
                      inflation_percentage = NA,
                      retirement_spending = input$retirement_spending,
                      brokerage_amount = input$retirementsavings,
@@ -399,6 +400,29 @@ shinyServer(function(input, output, session) {
       layout(title = "Alive or Deceased?",
              xaxis = list(title = "Age"),
              yaxis = list(title = "Percentage of simulations that ended year deceased"))
+  })
+  
+  output$broke_graph <- renderPlotly({
+    shiny::validate(
+      need(!is.null(monte_carlo_retirement()) & !is.na(monte_carlo_retirement()), 'Loading...')
+    )
+    
+    grp <- monte_carlo_retirement() %>%
+      dplyr::group_by(age, broke) %>%
+      summarize(cnt = n()) %>%
+      mutate(broke = as.character(broke)) %>%
+      mutate(broke = case_when(broke == 0 ~ "AvailableMoney",
+                               broke == 1 ~ "Broke")) %>%
+      pivot_wider(names_from = broke, values_from = cnt) %>%
+      data.frame()
+    
+    # https://plotly.com/r/filled-area-plots/#stacked-area-chart-with-cumulative-values
+    plot_ly(grp, x = ~age, y = ~AvailableMoney, name = 'Available Money',
+            type = 'scatter', mode = 'none', stackgroup = 'one', groupnorm = 'percent', fillcolor = 'rgb(5, 245, 24)') %>%
+      add_trace(x = ~age, y = ~Broke, name = 'Broke', fillcolor = 'rgb(205, 12, 24)') %>%
+      layout(title = "Available Money or Broke?",
+             xaxis = list(title = "Age"),
+             yaxis = list(title = "Percentage of simulations that ended without being in debt"))
   })
   
 })

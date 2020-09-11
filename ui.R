@@ -164,6 +164,7 @@ dashboardPage(
         tags$h3("Sample of the first Monte Carlo run:"),
         DT::dataTableOutput("montecarlo_table_retirement"),
         plotlyOutput("brokerage_retirement_graph"),
+        plotlyOutput("broke_graph"),
         plotlyOutput("deceased_graph")
       ),
       tabItem(tabName = "About",

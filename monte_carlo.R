@@ -135,6 +135,9 @@ single_run_retirement <- function(df, yrs, death_projections) {
   df[,'brokerage_stock_percentage'] = round((df[,'brokerage_stock_amount'] / df[,'brokerage_amount']) * 100, 2)
   df[,'brokerage_bond_percentage'] = round((df[,'brokerage_bond_amount'] / df[,'brokerage_amount']) * 100, 2)
   
+  # are we broke?
+  df[,'broke'] = df[,'brokerage_amount'] <= 0
+  
   # clean out some of the variables set in the first row since they don't make sense
   df[1,]['inflation_percentage'] = NA
   df[1,]['stock_return_percentage'] = NA
