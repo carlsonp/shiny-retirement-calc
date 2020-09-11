@@ -387,10 +387,15 @@ shinyServer(function(input, output, session) {
       data.frame()
     
     # https://plotly.com/r/filled-area-plots/#stacked-area-chart-with-cumulative-values
-    plot_ly(grp, x = ~age, y = ~Deceased, name = 'Deceased',
+    p <- plot_ly(grp, x = ~age, y = ~Deceased, name = 'Deceased',
             type = 'scatter', mode = 'none', stackgroup = 'one', groupnorm = 'percent', fillcolor = 'rgb(205, 12, 24)') %>%
-      add_trace(x = ~age, y = ~Alive, name = 'Alive', fillcolor = 'rgb(2, 205, 24)') %>%
-      add_trace(x = ~age, y = ~No_Data, name = 'No mortality data available', fillcolor = 'rgb(5, 12, 245)') %>%
+      add_trace(x = ~age, y = ~Alive, name = 'Alive', fillcolor = 'rgb(2, 205, 24)')
+    
+    if (!is.null(grp$No_Data)) {
+      p <- p %>% add_trace(x = ~age, y = ~No_Data, name = 'No mortality data available', fillcolor = 'rgb(5, 12, 245)')
+    }
+    
+    p <- p %>%
       layout(title = "Alive or Deceased?",
              xaxis = list(title = "Age"),
              yaxis = list(title = "Percentage of simulations that ended year deceased"))
