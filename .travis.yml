@@ -37,6 +37,7 @@ r_packages:
     - shinyjs
     - purrr
     - leaflet
+    - shinyBS
 
 script:
     - R -f deploy.R

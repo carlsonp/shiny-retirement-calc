@@ -33,7 +33,6 @@
 * Taxes (current and in retirement), pre-tax and post-tax
 * 401k/403b and employee matching
 * Traditional and Roth IRAs
-* Average life expectancy for M/F
 * Social security, pensions, etc.
 * Asset reallocation over time to mimic target retirement funds, more bonds over stocks, etc.
 * Inheritance
@@ -52,4 +51,3 @@
 
 * [Criticisms of Monte Carlo](http://retirementoptimizer.com/)
 * [Monte Carlo in Python](https://pbpython.com/monte-carlo.html)
-

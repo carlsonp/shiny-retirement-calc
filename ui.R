@@ -5,13 +5,14 @@ library(DT)
 library(leaflet)
 library(shinydashboard)
 library(shinyjs)
+library(shinyBS)
 
 dashboardPage(
   
   dashboardHeader(title = "Retirement Calculator"),
   
   dashboardSidebar(
-    sidebarMenu(
+    sidebarMenu(id="sidebar",
       menuItem("Introduction", tabName = "Introduction", icon = icon("comment-dollar")),
       menuItem("Global Settings", tabName = "GlobalSettings", icon = icon("sliders-h")),
       menuItem("FIRE Settings", tabName = "FIRESettings", icon = icon("sliders-h")),
@@ -35,8 +36,7 @@ dashboardPage(
               position:fixed;
               top: calc(50% - 50px);;
               left: calc(50% - 400px);;
-            }
-           "
+            }"
         )
       )
     ),
@@ -44,14 +44,17 @@ dashboardPage(
     tabItems(
       tabItem(tabName = "Introduction",
         tags$p("This is not intended to be fullproof and makes many assumptions, seek a financial professional for more in-depth individual advice."),
-        tags$p("BUTTON HERE to Global settings")
+        tags$br(),
+        actionButton('jumpToGlobalSettings', 'Next -> Global Settings')
       ),
       tabItem(tabName = "GlobalSettings",
         numericInput("age", "Current Age:", 35, min = 1, max = 78, step = 1),
         numericInput("retirement_spending", "Retirement Spending ($):", 40000, min = 1, step = 1),
+        bsTooltip("retirement_spending", "How much money in todays dollars you expect to spend in retirement.  This will be adjusted for inflation.", placement="right"),
         fixedRow(
           column(3,
-             numericInput("avg_stock_return_percentage", "Average Stock Return Percentage:", 8.1, min = 0.1, max = 100, step = 0.1)
+             numericInput("avg_stock_return_percentage", "Average Stock Return Percentage:", 8.1, min = 0.1, max = 100, step = 0.1),
+             bsTooltip("avg_stock_return_percentage", "The average stock market return.  This along with the standard deviation creates the normal distribution to sample from.", placement="right")
           ),
           column(3,
              numericInput("stock_stddev", "Stock Return Percentage Standard Deviation:", 17, min = 0, max = 75, step = 0.1)
@@ -60,7 +63,8 @@ dashboardPage(
         plotlyOutput("stock_histogram"),
         fixedRow(
           column(3,
-             numericInput("avg_bond_return_percentage", "Average Bond Return Percentage:", 2.4, min = 0.1, max = 100, step = 0.1)
+             numericInput("avg_bond_return_percentage", "Average Bond Return Percentage:", 2.4, min = 0.1, max = 100, step = 0.1),
+             bsTooltip("avg_bond_return_percentage", "The average bond return.  This along with the standard deviation creates the normal distribution to sample from.", placement="right")
           ),
           column(3,
              numericInput("bond_stddev", "Bond Return Percentage Standard Deviation:", 7, min = 0, max = 75, step = 0.1)
@@ -76,12 +80,14 @@ dashboardPage(
           )
         ),
         plotlyOutput("inflation_histogram"),
-        tags$p("BUTTON HERE to FIRE Settings")
+        tags$br(),
+        actionButton('jumpToFireSettings', 'Next -> FIRE Settings')
       ),
       tabItem(tabName = "FIRESettings",
         fixedRow(
           column(3,
-            numericInput("brokerage_amount", "Brokerage Investments ($):", value = 50000, min = 0, step = 1)
+            numericInput("brokerage_amount", "Brokerage Investments ($):", value = 50000, min = 0, step = 1),
+            bsTooltip("brokerage_amount", "How much you currently have invested via brokerage.", placement="right")
           ),
           column(3,
             uiOutput("stock_slider")
@@ -118,7 +124,8 @@ dashboardPage(
         numericInput("avg_tax_rate_percentage", "Average Tax Rate Percentage:", 7, min = 0.1, max = 100, step = 0.1),
         tags$p("In todays dollars"),
         uiOutput("fire_target_ui"),
-        tags$p("BUTTON HERE to FIRE")
+        tags$br(),
+        actionButton('jumpToFire', 'Next -> FIRE')
       ),
       tabItem(tabName = "FIRE",
         downloadButton("downloadmontecarlo", "Download Monte Carlo Pre-Retirement Data"),
@@ -126,7 +133,8 @@ dashboardPage(
         DT::dataTableOutput("montecarlo_table"),
         plotlyOutput("brokerage_graph"),
         plotlyOutput("hit_fire_target_graph"),
-        tags$p("BUTTON HERE to Retirement Settings")
+        tags$br(),
+        actionButton('jumpToRetirementSettings', 'Next -> Retirement Settings')
       ),
       tabItem(tabName = "RetirementSettings",
         numericInput("retirementage", "Retirement Age:", 65, min = 1, max = 100, step = 1),
@@ -157,7 +165,8 @@ dashboardPage(
              uiOutput("setupavglife")
           )
         ),
-        tags$p("BUTTON HERE to retirement")
+        tags$br(),
+        actionButton('jumpToRetirement', 'Next -> Retirement')
       ),
       tabItem(tabName = "Retirement",
         downloadButton("downloadmontecarloretirement", "Download Monte Carlo Retirement Data"),
@@ -165,9 +174,12 @@ dashboardPage(
         DT::dataTableOutput("montecarlo_table_retirement"),
         plotlyOutput("brokerage_retirement_graph"),
         plotlyOutput("broke_graph"),
-        plotlyOutput("deceased_graph")
+        plotlyOutput("deceased_graph"),
+        tags$br(),
+        actionButton('jumpToAbout', 'Next -> About')
       ),
       tabItem(tabName = "About",
+        tags$a(href="https://github.com/carlsonp/shiny-retirement-calc", "Source Code")
       )
     )
   )

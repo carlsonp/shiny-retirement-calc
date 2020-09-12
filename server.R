@@ -425,4 +425,22 @@ shinyServer(function(input, output, session) {
              yaxis = list(title = "Percentage of simulations that ended without being in debt"))
   })
   
+  observeEvent(input$jumpToGlobalSettings, {
+    updateTabItems(session, "sidebar", selected="GlobalSettings")
+  })
+  observeEvent(input$jumpToFireSettings, {
+    updateTabItems(session, "sidebar", selected="FIRESettings")
+  })
+  observeEvent(input$jumpToFire, {
+    updateTabItems(session, "sidebar", selected="FIRE")
+  })
+  observeEvent(input$jumpToRetirementSettings, {
+    updateTabItems(session, "sidebar", selected="RetirementSettings")
+  })
+  observeEvent(input$jumpToRetirement, {
+    updateTabItems(session, "sidebar", selected="Retirement")
+  })
+  observeEvent(input$jumpToAbout, {
+    updateTabItems(session, "sidebar", selected="About")
+  })
 })
