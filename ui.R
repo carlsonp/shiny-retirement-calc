@@ -73,7 +73,8 @@ dashboardPage(
         plotlyOutput("bond_histogram"),
         fixedRow(
           column(3,
-             numericInput("avg_inflation_percentage", "Average Inflation Percentage:", 2, min = 0.1, max = 100, step = 0.1)
+             numericInput("avg_inflation_percentage", "Average Inflation Percentage:", 2, min = 0.1, max = 100, step = 0.1),
+             bsTooltip("avg_inflation_percentage", "The average inflation amount.  This along with the standard deviation creates the normal distribution to sample from.", placement="right")
           ),
           column(3,
              numericInput("inflation_stddev", "Inflation Percentage Standard Deviation:", 4, min = 0, max = 75, step = 0.1)
@@ -98,10 +99,12 @@ dashboardPage(
         ),
         fixedRow(
           column(3,
-            numericInput("income", "Income ($):", 60000, min = 1, step = 1)
+            numericInput("income", "Income ($):", 60000, min = 1, step = 1),
+            bsTooltip("income", "Current yearly income.", placement="right")
           ),
           column(3,
-            numericInput("spending", "Pre-Retirement Spending ($):", 45000, min = 1, step = 1)
+            numericInput("spending", "Pre-Retirement Spending ($):", 45000, min = 1, step = 1),
+            bsTooltip("spending", "Current yearly spending.", placement="right")
           ),
           column(3,
             uiOutput("savings")
@@ -119,10 +122,11 @@ dashboardPage(
           )
         ),
         numericInput("income_growth_percentage", "Income Growth Percentage:", 1, min = 0, max = 100, step = 0.1),
+        bsTooltip("income_growth_percentage", "How much your yearly income will increase by each year as a percentage.", placement="right"),
         uiOutput("retirementSpending"),
-        numericInput("target_withdrawl_percentage", "Target Withdrawl Rate Percentage:", 4, min = 0.1, step = 0.1),
+        numericInput("target_withdrawl_percentage", "Target Withdrawl Rate Percentage:", 3, min = 0.1, step = 0.1),
+        bsTooltip("target_withdrawl_percentage", "How much will you withdraw each year during retirement? 3% is considered conservative.", placement="right"),
         numericInput("avg_tax_rate_percentage", "Average Tax Rate Percentage:", 7, min = 0.1, max = 100, step = 0.1),
-        tags$p("In todays dollars"),
         uiOutput("fire_target_ui"),
         tags$br(),
         actionButton('jumpToFire', 'Next -> FIRE')
@@ -141,6 +145,7 @@ dashboardPage(
         uiOutput("retirementyear"),
         uiOutput("retirementSpendingDup"),
         numericInput("retirementsavings", "Savings Upon Retirement ($):", 2000000, min = 1, step = 1),
+        bsTooltip("retirementsavings", "How much you saved and will live off of upon retirement.", placement="right"),
         fixedRow(
           column(3,
             uiOutput("stock_current_slider")
