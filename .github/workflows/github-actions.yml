@@ -1,0 +1,18 @@
+name: github-actions
+on: [push]
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # https://docs.github.com/en/free-pro-team@latest/actions/reference/encrypted-secrets
+      env: # set environment variables from secrets
+        SHINYAPPS_NAME: ${{ secrets.SHINYAPPS_NAME }}
+        SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
+        SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
+      - uses: actions/checkout@v2
+      # https://github.com/r-lib/actions/tree/master/setup-r
+      - uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: '4.0.3' # The R version to download
+      - run: Rscript -e "install.packages(c('rsconnect', 'shiny', 'tidyverse', 'lubridate', 'shinyWidgets', 'DT', 'plotly', 'readr', 'shinydashboard', 'shinyjs', 'purrr', 'leaflet', 'shinyBS'))"
+      - run: R -f deploy.R
