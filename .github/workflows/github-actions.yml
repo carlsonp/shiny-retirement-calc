@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # https://docs.github.com/en/free-pro-team@latest/actions/reference/encrypted-secrets
-      env: # set environment variables from secrets
+      - env: # set environment variables from secrets
         SHINYAPPS_NAME: ${{ secrets.SHINYAPPS_NAME }}
         SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
         SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
