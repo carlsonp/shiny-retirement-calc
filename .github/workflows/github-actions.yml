@@ -1,3 +1,6 @@
+# validate YAML
+# https://codebeautify.org/yaml-validator
+
 name: github-actions
 on: [push]
 jobs:
@@ -15,5 +18,5 @@ jobs:
       - uses: r-lib/actions/setup-r@v1
         with:
           r-version: '4.0.3' # The R version to download
-      - run: Rscript -e "install.packages(c('rsconnect', 'shiny', 'tidyverse', 'lubridate', 'shinyWidgets', 'DT', 'plotly', 'readr', 'shinydashboard', 'shinyjs', 'purrr', 'leaflet', 'shinyBS'))"
+      - run: Rscript -e "install.packages(c('rsconnect', 'shiny', 'tidyverse', 'lubridate', 'shinyWidgets', 'DT', 'plotly', 'readr', 'shinydashboard', 'shinyjs', 'shinyBS'))"
       - run: R -f deploy.R
