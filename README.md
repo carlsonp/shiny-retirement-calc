@@ -1,6 +1,6 @@
 # shiny-retirement-calc
 
-[![Build Status](https://travis-ci.com/carlsonp/shiny-retirement-calc.svg?branch=master)](https://travis-ci.com/carlsonp/shiny-retirement-calc)
+[![Actions Status](https://github.com/carlsonp/shiny-retirement-calc/workflows/github-actions/badge.svg)](https://github.com/carlsonp/shiny-retirement-calc/actions)
 
 [Shiny](https://shiny.rstudio.com/) app for performing retirement planning via Monte Carlo simulation, FIRE, etc.
 
@@ -13,8 +13,9 @@
 
 ## CI/CD
 
-* [Automated deployment and data refreshing daily via Travis-CI cron job](https://travis-ci.com/github/carlsonp/shiny-retirement-calc)
-* `shinyapps_name`, `shinyapps_secret`, and `shinyapps_token` are environment variables in travis-ci
+* Automated deployment via Github Actions
+* `SHINYAPPS_NAME`, `SHINYAPPS_SECRET`, and `SHINYAPPS_TOKEN` are repository secrets in Github where the
+values include single quotes around them.  The name is the Github account username.
 
 ## Data
 
