@@ -7,11 +7,6 @@ jobs:
   build-deploy:
     name: build-deploy
     runs-on: ubuntu-latest
-      # https://docs.github.com/en/free-pro-team@latest/actions/reference/encrypted-secrets
-    env: # set environment variables from secrets
-      SHINYAPPS_NAME: ${{ secrets.SHINYAPPS_NAME }}
-      SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
-      SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
     steps:
       - uses: actions/checkout@v2
       # https://github.com/r-lib/actions/tree/master/setup-r
@@ -20,4 +15,7 @@ jobs:
           r-version: '4.0.3' # The R version to download
       - run: sudo apt-get install libgdal-dev libudunits2-dev
       - run: Rscript -e "install.packages(c('rsconnect', 'shiny', 'tidyverse', 'lubridate', 'shinyWidgets', 'DT', 'plotly', 'readr', 'shinydashboard', 'shinyjs', 'shinyBS'))"
-      - run: R -f deploy.R
+      - name: Push to shinyapps.io
+        run: |
+          Rscript -e "rsconnect::setAccountInfo(name='username', token=${{secrets.SHINYAPPS_TOKEN}}, secret=${{secrets.SHINYAPPS_SECRET}})"
+          Rscript -e "rsconnect::deployApp(appName=${{secrets.SHINYAPPS_NAME}})"
