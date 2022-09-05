@@ -14,7 +14,7 @@ jobs:
         with:
           r-version: '4.2.1' # The R version to download
       - run: sudo apt-get install libgdal-dev libudunits2-dev
-      - run: Rscript -e "install.packages(c('rsconnect', 'shiny', 'tidyverse', 'lubridate', 'shinyWidgets', 'DT', 'plotly', 'readr', 'shinydashboard', 'shinyjs', 'shinyBS', 'leaflet'))"
+      - run: Rscript -e "install.packages(c('rsconnect', 'renv', 'shiny', 'tidyverse', 'lubridate', 'shinyWidgets', 'DT', 'plotly', 'readr', 'shinydashboard', 'shinyjs', 'shinyBS', 'leaflet'))"
       - name: Push to shinyapps.io
         run: |
           Rscript -e "rsconnect::setAccountInfo(name=${{secrets.SHINYAPPS_NAME}}, token=${{secrets.SHINYAPPS_TOKEN}}, secret=${{secrets.SHINYAPPS_SECRET}})"
