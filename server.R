@@ -15,12 +15,12 @@ options(scipen=999)
 # load up Social Security death projections for males and females
 # convert to long format
 # http://www.cookbook-r.com/Manipulating_data/Converting_data_between_wide_and_long_format/
-male_death_projections <- read_csv("DeathProbsE_M_Alt2_TR2020.csv") %>%
+male_death_projections <- read_csv("DeathProbsE_M_Alt2_TR2022.csv") %>%
   gather(age, probability, `0`:`119`, factor_key=TRUE) %>%
   mutate(gender = "Male") %>%
   mutate(age = as.integer(as.character(age))) %>%
   data.frame()
-female_death_projections <- read_csv("DeathProbsE_F_Alt2_TR2020.csv") %>%
+female_death_projections <- read_csv("DeathProbsE_F_Alt2_TR2022.csv") %>%
   gather(age, probability, `0`:`119`, factor_key=TRUE) %>%
   mutate(gender = "Female") %>%
   mutate(age = as.integer(as.character(age))) %>%

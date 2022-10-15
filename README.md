@@ -19,7 +19,7 @@ values include single quotes around them.  The name is the Github account userna
 
 ## Data
 
-* [Social Security Death Probabilities Projections](https://www.ssa.gov/oact/HistEst/Death/2020/DeathProbabilities2020.html)
+* [Social Security Death Probabilities Projections](https://www.ssa.gov/oact/HistEst/Death/2022/DeathProbabilities2022.html)
 
 ## Open Questions
 
