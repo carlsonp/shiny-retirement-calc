@@ -48,8 +48,8 @@ dashboardPage(
       ),
       tabItem(tabName = "GlobalSettings",
         numericInput("age", "Current Age:", 35, min = 1, max = 78, step = 1),
-        numericInput("retirement_spending", "Retirement Spending ($):", 40000, min = 1, step = 1),
-        bsTooltip("retirement_spending", "How much money in todays dollars you expect to spend in retirement.  This will be adjusted for inflation.", placement="right"),
+        numericInput("retirement_spending", "Yearly Retirement Spending ($):", 40000, min = 1, step = 1),
+        bsTooltip("retirement_spending", "How much money in todays dollars you expect to spend each year in retirement.  This will be adjusted for inflation.", placement="right"),
         fixedRow(
           column(3,
              numericInput("avg_stock_return_percentage", "Average Stock Return Percentage:", 8.1, min = 0.1, max = 100, step = 0.1),
@@ -98,12 +98,12 @@ dashboardPage(
         ),
         fixedRow(
           column(3,
-            numericInput("income", "Income ($):", 60000, min = 1, step = 1),
-            bsTooltip("income", "Current yearly income.", placement="right")
+            numericInput("income", "Yearly Income ($):", 60000, min = 1, step = 1),
+            bsTooltip("income", "Current yearly income after taxes.", placement="right")
           ),
           column(3,
-            numericInput("spending", "Pre-Retirement Spending ($):", 45000, min = 1, step = 1),
-            bsTooltip("spending", "Current yearly spending.", placement="right")
+            numericInput("spending", "Yearly Pre-Retirement Spending ($):", 45000, min = 1, step = 1),
+            bsTooltip("spending", "Current yearly spending after taxes.", placement="right")
           ),
           column(3,
             uiOutput("savings")
