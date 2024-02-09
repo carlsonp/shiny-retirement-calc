@@ -18,4 +18,4 @@ jobs:
       - name: Push to shinyapps.io
         run: |
           Rscript -e "rsconnect::setAccountInfo(name=${{secrets.SHINYAPPS_NAME}}, token=${{secrets.SHINYAPPS_TOKEN}}, secret=${{secrets.SHINYAPPS_SECRET}})"
-          Rscript -e "rsconnect::deployApp()"
+          Rscript -e "rsconnect::deployApp(forceUpdate=TRUE)"
